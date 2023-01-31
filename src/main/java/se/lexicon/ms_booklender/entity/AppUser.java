@@ -28,6 +28,15 @@ public class AppUser {
     @CreationTimestamp // by default, it should have now(), and we don't need to write in default constructor
     private LocalDate regDate;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    //AppUser & Details are completely connected
+    // - if we create AppUser, we must create also Details
+    // - if we remove AppUser, we must remove also Details
+    // -> CascadeType.ALL
+
+    @JoinColumn(name = "details_id")
+    private Details details;
+
 /*
     public AppUser() {
         this.regDate=LocalDate.now(); //-> and remove the @NoArgsConstructor
@@ -35,10 +44,11 @@ public class AppUser {
 
  */
 
-    public AppUser(String username, String password) {
-        this();
+    public AppUser(String username, String password, Details details) {
         this.username = username;
         this.password = password;
+        this.details  = details;
+
     }
 
 
