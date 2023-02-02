@@ -2,10 +2,13 @@ package se.lexicon.ms_booklender.entity;
 
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import se.lexicon.ms_booklender.exception.DataDuplicateException;
+import se.lexicon.ms_booklender.exception.DataNotFoundException;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -37,10 +40,20 @@ public class AppUser {
     @JoinColumn(name = "details_id")
     private Details details;
 
+
+    @OneToMany(
+            mappedBy = "borrower",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH}
+    )
+    private List<BookLoan> bookLoans = new ArrayList<>();
+
+
 /*
     public AppUser() {
         this.regDate=LocalDate.now(); //-> and remove the @NoArgsConstructor
     }
+
+
 
  */
 
@@ -51,7 +64,41 @@ public class AppUser {
 
     }
 
+    // helper methods for BookLoan:
+    public boolean addBookLoan(BookLoan bookLoan){
+        if (bookLoans.contains(bookLoan)){
+            return false; // it is already added -> we can not loan again
+        }
+        bookLoans.add(bookLoan);
+        bookLoan.setBorrower(this);
+        return true;
 
+    }
+    public void addBookLoanVoid(BookLoan bookLoan) throws DataDuplicateException
+    {
+        if (bookLoans.contains(bookLoan)) throw new DataDuplicateException("Book is already in the list");
+        bookLoans.add(bookLoan);
+        bookLoan.setBorrower(this);
+    }
+
+    public boolean removeBookLoan(BookLoan bookLoan){
+
+        if (!bookLoans.contains(bookLoan)){
+            return false; // it is not in the list  -> we can not remove
+        }
+        bookLoans.remove(bookLoan);
+        bookLoan.setBorrower(null);
+        return true;
+
+    }
+
+    public void removeBookLoanVoid(BookLoan bookLoan)throws DataNotFoundException{
+
+        if (!bookLoans.contains(bookLoan))throw new DataNotFoundException("Book was not in the list");
+        bookLoans.remove(bookLoan);
+        bookLoan.setBorrower(null);
+
+    }
     /*
      -> we can remove all the code that it is repeated :
      constructors (many types), getters & setters, equals & hashcode, toString
